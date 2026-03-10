@@ -1,0 +1,313 @@
+:root {
+    --bg-color: #05070a;
+    --card-bg: rgba(255, 255, 255, 0.03);
+    --accent-color: #d4af37;
+    --text-primary: #ffffff;
+    --text-secondary: #a0a0a0;
+    --border-color: rgba(255, 255, 255, 0.1);
+    --glass-blur: 15px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    line-height: 1.6;
+    overflow-x: hidden;
+    min-height: 100vh;
+}
+
+.background-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at 50% 50%, #1a2a44 0%, #05070a 100%);
+    z-index: -1;
+    opacity: 0.6;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+header {
+    padding: 6rem 0 4rem;
+    text-align: center;
+    background: linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0.5)), url('hero.png');
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 4rem;
+}
+
+.header-content {
+    position: relative;
+    z-index: 1;
+}
+
+.date-badge {
+    background: rgba(212, 175, 55, 0.1);
+    color: var(--accent-color);
+    padding: 0.5rem 1.5rem;
+    border-radius: 100px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    font-size: 0.8rem;
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    display: inline-block;
+    margin-bottom: 1.5rem;
+}
+
+h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+    font-weight: 300;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.section {
+    margin-bottom: 5rem;
+}
+
+.section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.5rem;
+    margin-bottom: 2.5rem;
+    position: relative;
+    display: inline-block;
+}
+
+.section-title::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 0;
+    width: 60px;
+    height: 3px;
+    background: var(--accent-color);
+}
+
+.glass-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 2.5rem;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    height: 100%;
+}
+
+.glass-card:hover {
+    transform: translateY(-10px);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+}
+
+.headline-card {
+    border-left: 4px solid var(--accent-color);
+    background: linear-gradient(90deg, rgba(212, 175, 55, 0.05) 0%, rgba(255, 255, 255, 0.03) 100%);
+}
+
+.headline-card h2 {
+    margin-bottom: 1.5rem;
+    font-family: 'Playfair Display', serif;
+    color: var(--accent-color);
+}
+
+.headline-card p {
+    font-size: 1.25rem;
+    font-weight: 400;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+}
+
+.glass-card h3 {
+    font-size: 1.4rem;
+    margin-bottom: 1.2rem;
+    color: var(--accent-color);
+}
+
+.glass-card p {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    line-height: 1.8;
+}
+
+.border-accent {
+    border-top: 1px solid var(--accent-color);
+}
+
+footer {
+    padding: 4rem 0;
+    text-align: center;
+    border-top: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* Animations */
+.fade-in {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInUp 1s forwards;
+}
+
+@keyframes fadeInUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Podcast Player Styles */
+.podcast-player-container {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 600px;
+    z-index: 100;
+}
+
+.podcast-player {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 2rem;
+    border-radius: 100px;
+    background: rgba(10, 15, 25, 0.8);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.player-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.podcast-status-dot {
+    width: 10px;
+    height: 10px;
+    background: var(--text-secondary);
+    border-radius: 50%;
+}
+
+.playing .podcast-status-dot {
+    background: #ff3b3b;
+    box-shadow: 0 0 10px #ff3b3b;
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    50% { opacity: 0.3; }
+}
+
+.podcast-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.host-name {
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: var(--accent-color);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.playing-title {
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 250px;
+}
+
+.play-btn {
+    background: var(--accent-color);
+    color: #000;
+    border: none;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    transition: transform 0.2s;
+}
+
+.play-btn:hover {
+    transform: scale(1.1);
+}
+
+.visualizer {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    height: 20px;
+}
+
+.visualizer span {
+    width: 3px;
+    height: 100%;
+    background: var(--accent-color);
+    border-radius: 3px;
+    opacity: 0.3;
+}
+
+.playing .visualizer span {
+    opacity: 1;
+    animation: scaleHeight 0.5s ease-in-out infinite alternate;
+}
+
+.playing .visualizer span:nth-child(2) { animation-delay: 0.1s; }
+.playing .visualizer span:nth-child(3) { animation-delay: 0.2s; }
+.playing .visualizer span:nth-child(4) { animation-delay: 0.3s; }
+.playing .visualizer span:nth-child(5) { animation-delay: 0.4s; }
+
+@keyframes scaleHeight {
+    from { height: 20%; }
+    to { height: 100%; }
+}
+
+@media (max-width: 768px) {
+    h1 {
+        font-size: 3rem;
+    }
+    .grid {
+        grid-template-columns: 1fr;
+    }
+    header {
+        padding: 4rem 1rem;
+    }
+}
