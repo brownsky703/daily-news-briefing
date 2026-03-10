@@ -1,35 +1,44 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // 날짜 업데이트
-    const dateElement = document.getElementById('current-date');
-    const options = { year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' };
-    const today = new Date();
-    dateElement.textContent = today.toLocaleDateString('ko-KR', options).toUpperCase().replace(/\./g, '.').replace(/ /g, ' ');
+    // API 데이터 기반 UI 업데이트 함수
+    async function updateDynamicContent() {
+        try {
+            const response = await fetch('/api/news');
+            const data = await response.json();
 
-    // 스크롤 애니메이션 관찰자
-    const observerOptions = {
-        threshold: 0.1
-    };
+            if (data.error) throw new Error(data.message);
 
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('fade-in-visible');
-            }
-        });
-    }, observerOptions);
+            // 1. 날짜 및 헤드라인 업데이트
+            document.getElementById('current-date').textContent = `${data.date} (Automated)`;
+            document.querySelector('#headline-summary p').textContent = data.headlineSummary;
 
-    document.querySelectorAll('.fade-in').forEach(sec => {
-        observer.observe(sec);
-    });
+            // 2. 뉴스 카드 업데이트 (Politics, Economy, Technology 섹션 순서대로 매칭)
+            const cards = document.querySelectorAll('.grid .glass-card');
+            data.newsItems.forEach((item, index) => {
+                if (cards[index]) {
+                    cards[index].querySelector('h3').textContent = item.title;
+                    cards[index].querySelector('p').textContent = item.content;
+                }
+            });
 
-    // Podcast Logic (1인 전문 브리퍼 체제 - iPhone Safari 최적화)
+            // 3. 팟캐스트 스크립트 업데이트
+            podcastScript.length = 0; // 기존 스크립트 비우기
+            data.podcastScript.forEach(text => {
+                podcastScript.push({ text });
+            });
+
+            console.log("뉴스 업데이트 완료:", data.date);
+        } catch (error) {
+            console.error("뉴스 로드 실패, 기존 데이터를 유지합니다:", error);
+        }
+    }
+
+    // 팟캐스트 스크립트 초기화 (API 호출 전 기본값)
     const podcastScript = [
-        { text: "반갑습니다. 오늘 하루 꼭 알아야 할 글로벌 주요 뉴스, 빠르게 정리해 드립니다." },
-        { text: "먼저 중동 상황입니다. 트럼프 대통령이 전쟁의 '완성 단계'를 언급하며 긴장이 최고조에 달했는데요. 이로 인해 유가가 배럴당 120달러까지 치솟으면서 우리 증시를 포함한 아시아 시장 전체가 큰 충격을 받았습니다." },
-        { text: "경제 쪽을 보면, 스태그플레이션에 대한 공포가 현실화되는 모양새입니다. G7 국가들이 비축유 방출을 논의하며 시장 안정에 나섰지만, 환율이 17년 만에 최고치를 기록하는 등 불안은 여전합니다." },
-        { text: "다음은 기술 소식입니다. OpenAI의 새로운 모델 '시그마'가 자가 인식 논쟁을 불러일으켰습니다. 단순히 똑똑한 AI를 넘어 인지 능력이 있는 것 아니냐는 분석이 나오면서 기술계가 뜨겁습니다." },
-        { text: "마지막으로 스페이스X의 스타쉽이 화성 무인 착륙에 성공했다는 소식까지 전해드리면서, 오늘 브리핑 마칩니다. 지금까지 글로벌 브리핑이었습니다." }
+        { text: "뉴스를 불러오는 중입니다. 잠시만 기다려 주세요." }
     ];
+
+    // 페이지 로드 시 실행
+    updateDynamicContent();
 
     let isPlaying = false;
     let currentLine = 0;
