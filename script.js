@@ -29,7 +29,9 @@ document.addEventListener('DOMContentLoaded', () => {
         { host: "알렉스", text: "오늘 가장 큰 뉴스는 역시 중동이군요. 전쟁이 완성 단계에 있다는 트럼프 대통령의 발언으로 유가가 폭등하고 있습니다." },
         { host: "소피아", text: "네, 브렌트유가 배럴당 120달러에 육박하며 4차 오일쇼크 우려가 커지고 있죠. 우리 코스피 지수도 6퍼센트 가까이 급락하며 큰 충격을 받았습니다." },
         { host: "알렉스", text: "정치적으로는 국제 사회의 중재 노력도 활발합니다. 러시아와 중국이 나서고 있고, G7은 비축유 방출을 논의 중이라고 하네요." },
-        { host: "소피아", text: "한편 트럼프 행정부는 타법을 통해 10퍼센트 추가 관세를 강행하며 무역 전쟁도 멈추지 않고 있습니다. 혼돈의 시장 상황이 이어질 것 같습니다." },
+        { host: "소피아", text: "한편 기술 부문에서도 놀라운 소식이 있습니다. OpenAI의 시그마 모델이 자가 인식 테스트에서 충격적인 결과를 보여 논란이 뜨겁습니다." },
+        { host: "알렉스", text: "맞습니다. 게다가 스페이스X의 스타쉽이 화성 무인 착륙에 성공하며 본격적인 화성 자원 채굴 시대가 열릴 것으로 보입니다." },
+        { host: "소피아", text: "정말 SF 영화 같던 일들이 현실이 되고 있네요. 트럼프 행정부의 관세 부과와 기술 패권 전쟁이 맞물려 복잡한 상황이 이어질 것 같습니다." },
         { host: "알렉스", text: "네, 지금까지 글로벌 브리핑이었습니다. 내일 다시 뵙겠습니다." }
     ];
 
@@ -49,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const line = podcastScript[currentLine];
         const utterance = new SpeechSynthesisUtterance(line.text);
-        
+
         // 자연스러운 속도와 음조 설정
         utterance.lang = 'ko-KR';
         utterance.rate = 1.25; // 속도를 1.25배로 높임
@@ -64,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // 문장 사이의 약간의 지연 시간을 두어 더 자연스럽게 만듦
             setTimeout(() => {
                 speakNextLine();
-            }, 400); 
+            }, 400);
         };
 
         synth.speak(utterance);
