@@ -35,7 +35,7 @@ module.exports = async (req, res) => {
     try {
         // 1. 뉴스 데이터 수집 (News API)
         const domains = 'reuters.com,apnews.com,bloomberg.com,bbc.co.uk,techcrunch.com';
-        const newsUrl = `https://newsapi.org/v2/everything?domains=${domains}&language=en&pageSize=5&sortBy=publishedAt&apiKey=${NEWS_API_KEY}`;
+        const newsUrl = `https://newsapi.org/v2/everything?domains=${domains}&language=en&pageSize=15&sortBy=publishedAt&apiKey=${NEWS_API_KEY}`;
 
         console.log("Fetching news from News API...");
         const newsResponse = await fetch(newsUrl);
@@ -54,33 +54,33 @@ module.exports = async (req, res) => {
             .map(a => `- ${a.title}: ${a.description}`)
             .join('\n');
 
-        if (!articlesContext) {
-            throw new Error("No valid articles to summarize");
-        }
-
         // 2. AI 요약 및 팟캐스트 스크립트 생성 (Gemini API)
-        // 무료 계정 할당량이 넉넉한 gemini-1.5-flash 모델로 변경
         const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
         
-        const prompt = `Based on these 5 news headlines, create a concise daily news briefing in Korean.
+        const prompt = `Based on these news headlines, create a daily news briefing in Korean.
         
         News Articles:
         ${articlesContext}
         
         Requirements:
-        1. headlineSummary: 1-2 Korean sentences synthesizing the main theme.
-        2. newsItems: exactly 5 items, each with "title" and "content" (1 sentence summary).
-        3. podcastScript: natural, professional broadcast style script.
+        1. headlineSummary: 1-2 Korean sentences synthesizing the main theme of today's news.
+        2. newsItems: Categorize news into 3 categories: "politics", "economy", "technology".
+           Each category must have exactly 3 items. Total 9 items.
+        3. podcastScript: A natural, professional broadcast style script.
         
-        Return ONLY valid JSON in this format:
+        Return ONLY valid JSON in this exact format:
         {
           "date": "${todayStr}",
-          "headlineSummary": "오늘의 주요 뉴스 요약...",
-          "newsItems": [{"title": "제목", "content": "내용"}],
+          "headlineSummary": "요약...",
+          "categories": {
+            "politics": [{"title": "제목", "content": "내용"}],
+            "economy": [{"title": "제목", "content": "내용"}],
+            "technology": [{"title": "제목", "content": "내용"}]
+          },
           "podcastScript": ["안녕하세요...", "..."]
         }`;
 
-        console.log("Generating summary with Gemini API...");
+        console.log("Generating categorized summary with Gemini API...");
         const geminiResponse = await fetch(geminiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -91,7 +91,7 @@ module.exports = async (req, res) => {
                 }],
                 generationConfig: {
                     temperature: 0.7,
-                    maxOutputTokens: 1000
+                    maxOutputTokens: 1500
                 }
             })
         });
@@ -102,43 +102,33 @@ module.exports = async (req, res) => {
             throw new Error(`Gemini API Error: ${geminiData.error.message || JSON.stringify(geminiData.error)}`);
         }
 
-        // 안전한 데이터 추출
         if (!geminiData.candidates?.[0]?.content?.parts?.[0]?.text) {
-            console.error("Gemini Response Structure Issue:", JSON.stringify(geminiData));
             throw new Error("AI did not return a valid content structure.");
         }
 
         let resultText = geminiData.candidates[0].content.parts[0].text;
 
-        // JSON 추출 및 정제 로직 강화
         let resultJson;
         try {
-            // 마크다운 코드 블록 제거 시도
             const jsonBody = resultText.replace(/```json/g, '').replace(/```/g, '').trim();
             resultJson = JSON.parse(jsonBody);
         } catch (parseError) {
-            console.warn("Standard JSON parsing failed, attempting regex extraction:", parseError.message);
             const jsonMatch = resultText.match(/\{[\s\S]*\}/);
             if (jsonMatch) {
-                try {
-                    resultJson = JSON.parse(jsonMatch[0]);
-                } catch (e) {
-                    throw new Error("AI returned malformed JSON that couldn't be cleaned.");
-                }
+                resultJson = JSON.parse(jsonMatch[0]);
             } else {
-                throw new Error("Could not find JSON object in AI response.");
+                throw new Error("Could not parse JSON from AI response.");
             }
         }
 
-        if (!resultJson.newsItems || !resultJson.headlineSummary) {
-            throw new Error("Missing required fields in AI response structure.");
+        if (!resultJson.categories || !resultJson.headlineSummary) {
+            throw new Error("Missing required fields (categories or headlineSummary) in AI response.");
         }
 
-        // 결과 저장 및 반환
         cachedData = resultJson;
         lastFetchTime = todayStr;
 
-        console.log("Successfully generated news briefing for:", todayStr);
+        console.log("Successfully generated categorized news briefing for:", todayStr);
         res.status(200).json(resultJson);
     } catch (error) {
         console.error("API Processing Error:", error.message);

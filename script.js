@@ -32,15 +32,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 headlineP.textContent = data.headlineSummary;
             }
 
-            // 2. 뉴스 카드 업데이트
-            if (data.newsItems && Array.isArray(data.newsItems)) {
-                const cards = document.querySelectorAll('.grid .glass-card');
-                data.newsItems.forEach((item, index) => {
-                    if (cards[index]) {
-                        const titleEl = cards[index].querySelector('h3');
-                        const contentEl = cards[index].querySelector('p');
-                        if (titleEl) titleEl.textContent = item.title || '...';
-                        if (contentEl) contentEl.textContent = item.content || '데이터를 불러오지 못했습니다.';
+            // 2. 뉴스 카드 업데이트 (카테고리별)
+            const categoryMap = {
+                'politics': '#politics',
+                'economy': '#economy',
+                'technology': '#technology'
+            };
+
+            if (data.categories) {
+                Object.keys(categoryMap).forEach(catKey => {
+                    const sectionId = categoryMap[catKey];
+                    const items = data.categories[catKey];
+                    if (items && Array.isArray(items)) {
+                        const section = document.querySelector(sectionId);
+                        if (section) {
+                            const cards = section.querySelectorAll('.glass-card');
+                            items.forEach((item, index) => {
+                                if (cards[index]) {
+                                    const titleEl = cards[index].querySelector('h3');
+                                    const contentEl = cards[index].querySelector('p');
+                                    if (titleEl) titleEl.textContent = item.title || '...';
+                                    if (contentEl) contentEl.textContent = item.content || '데이터를 불러오지 못했습니다.';
+                                }
+                            });
+                        }
                     }
                 });
             }
