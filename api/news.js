@@ -5,6 +5,9 @@ let cachedData = null;
 let lastFetchTime = null;
 
 module.exports = async (req, res) => {
+    const NEWS_API_KEY = process.env.NEWS_API_KEY;
+    const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+
     // 0. API 키 확인 가드
     if (!NEWS_API_KEY || !GEMINI_API_KEY) {
         const missing = [];
