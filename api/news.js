@@ -79,6 +79,7 @@ module.exports = async (req, res) => {
                     parts: [{ text: prompt }] 
                 }],
                 generationConfig: {
+                    response_mime_type: "application/json",
                     temperature: 0.7,
                     maxOutputTokens: 2048
                 }
@@ -100,7 +101,12 @@ module.exports = async (req, res) => {
         let resultText = geminiData.candidates[0].content.parts[0].text;
 
         // JSON 추출
+        let resultJson;
         try {
+            // response_mime_type: "application/json"이 설정되어 있으면 바로 파싱 가능
+            resultJson = JSON.parse(resultText);
+        } catch (parseError) {
+            console.warn("Direct JSON parsing failed, attempting cleanup:", parseError);
             const jsonMatch = resultText.match(/```(?:json)?\s*([\s\S]*?)```/);
             let cleanedJsonText = jsonMatch ? jsonMatch[1].trim() : resultText.trim();
 
@@ -108,22 +114,18 @@ module.exports = async (req, res) => {
                 const bruteMatch = cleanedJsonText.match(/\{[\s\S]*\}/);
                 if (bruteMatch) cleanedJsonText = bruteMatch[0].trim();
             }
-
-            const resultJson = JSON.parse(cleanedJsonText);
-
-            if (!resultJson.newsItems || !resultJson.headlineSummary) {
-                throw new Error("Missing required fields in AI response");
-            }
-
-            // 결과 저장 및 반환
-            cachedData = resultJson;
-            lastFetchTime = todayStr;
-
-            res.status(200).json(resultJson);
-        } catch (parseError) {
-            console.error("JSON Parsing Error:", parseError, "Raw Text:", resultText);
-            throw new Error("Failed to parse AI response into JSON");
+            resultJson = JSON.parse(cleanedJsonText);
         }
+
+        if (!resultJson.newsItems || !resultJson.headlineSummary) {
+            throw new Error("Missing required fields in AI response");
+        }
+
+        // 결과 저장 및 반환
+        cachedData = resultJson;
+        lastFetchTime = todayStr;
+
+        res.status(200).json(resultJson);
     } catch (error) {
         console.error("API Error:", error.message);
 
@@ -135,7 +137,7 @@ module.exports = async (req, res) => {
             res.status(500).json({
                 error: "Internal Server Error",
                 message: error.message,
-                details: "Please check API keys and quota."
+                details: error.message || "Please check API keys and quota."
             });
         }
     }
