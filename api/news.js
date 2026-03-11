@@ -22,7 +22,7 @@ module.exports = async (req, res) => {
     try {
         // 1. 뉴스 데이터 수집 (News API)
         const domains = 'reuters.com,apnews.com,bloomberg.com,bbc.co.uk,techcrunch.com';
-        const newsUrl = `https://newsapi.org/v2/everything?domains=${domains}&language=en&pageSize=15&sortBy=publishedAt&apiKey=${NEWS_API_KEY}`;
+        const newsUrl = `https://newsapi.org/v2/everything?domains=${domains}&language=en&pageSize=10&sortBy=publishedAt&apiKey=${NEWS_API_KEY}`;
 
         const newsResponse = await fetch(newsUrl);
         const newsData = await newsResponse.json();
@@ -45,29 +45,24 @@ module.exports = async (req, res) => {
         }
 
         // 2. AI 요약 및 팟캐스트 스크립트 생성 (Gemini API)
-        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
         
-        const prompt = `Based on the following news headlines and descriptions, create a daily news briefing in Korean.
+        const prompt = `Based on the following 10 news headlines, create a concise daily news briefing in Korean.
         
         News Articles:
         ${articlesContext}
         
         Requirements:
-        1. Summarize the main themes into a 1-2 sentence "headlineSummary".
-        2. Select the top 6 news items and provide a concise summary for each.
-        3. Create a professional "podcastScript" in Korean. The tone should be calm, authoritative, and direct.
+        1. headlineSummary: 2 short sentences.
+        2. newsItems: Top 5 items with title and 1-sentence content.
+        3. podcastScript: Professional, direct, authoritative.
         
-        Output MUST be in a valid JSON format with the following structure:
+        Structure:
         {
           "date": "${todayStr}",
           "headlineSummary": "...",
-          "newsItems": [
-            {"title": "...", "content": "..."},
-            ...
-          ],
-          "podcastScript": [
-            "...", "..."
-          ]
+          "newsItems": [{"title": "...", "content": "..."}],
+          "podcastScript": ["..."]
         }`;
 
         const geminiResponse = await fetch(geminiUrl, {
@@ -80,8 +75,8 @@ module.exports = async (req, res) => {
                 }],
                 generationConfig: {
                     response_mime_type: "application/json",
-                    temperature: 0.7,
-                    maxOutputTokens: 2048
+                    temperature: 0.5,
+                    maxOutputTokens: 1024
                 }
             })
         });
