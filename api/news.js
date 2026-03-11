@@ -59,8 +59,8 @@ module.exports = async (req, res) => {
         }
 
         // 2. AI 요약 및 팟캐스트 스크립트 생성 (Gemini API)
-        // 모델 ID를 최신 버전인 gemini-1.5-flash-latest로 변경
-        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
+        // 모델 ID를 2026년 기준 표준인 gemini-2.0-flash로 변경
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
         
         const prompt = `Based on these 5 news headlines, create a concise daily news briefing in Korean.
         
