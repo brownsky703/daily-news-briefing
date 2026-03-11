@@ -14,7 +14,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 1. 날짜 및 헤드라인 업데이트
             if (data.date) {
-                document.getElementById('current-date').textContent = `${data.date} (Automated)`;
+                const formattedDate = data.date.replace(/-/g, '.');
+                document.getElementById('current-date').textContent = `${formattedDate} (Automated)`;
+                document.title = `Global Briefing | ${formattedDate}`;
             }
             if (data.headlineSummary) {
                 headlineP.textContent = data.headlineSummary;
