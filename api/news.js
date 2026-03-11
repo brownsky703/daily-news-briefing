@@ -55,7 +55,7 @@ module.exports = async (req, res) => {
             .join('\n');
 
         // 2. AI 요약 및 팟캐스트 스크립트 생성 (Gemini API)
-        const geminiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
         
         const prompt = `Based on these news headlines, create a daily news briefing in Korean.
         
