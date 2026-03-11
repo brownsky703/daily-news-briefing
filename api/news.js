@@ -22,7 +22,7 @@ module.exports = async (req, res) => {
     try {
         // 1. 뉴스 데이터 수집 (News API)
         const domains = 'reuters.com,apnews.com,bloomberg.com,bbc.co.uk,techcrunch.com';
-        const newsUrl = `https://newsapi.org/v2/everything?domains=${domains}&language=en&pageSize=10&sortBy=publishedAt&apiKey=${NEWS_API_KEY}`;
+        const newsUrl = `https://newsapi.org/v2/everything?domains=${domains}&language=en&pageSize=5&sortBy=publishedAt&apiKey=${NEWS_API_KEY}`;
 
         const newsResponse = await fetch(newsUrl);
         const newsData = await newsResponse.json();
@@ -45,19 +45,19 @@ module.exports = async (req, res) => {
         }
 
         // 2. AI 요약 및 팟캐스트 스크립트 생성 (Gemini API)
-        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
         
-        const prompt = `Based on the following 10 news headlines, create a concise daily news briefing in Korean.
+        const prompt = `Based on these 5 news headlines, create a concise daily news briefing in Korean.
         
         News Articles:
         ${articlesContext}
         
         Requirements:
-        1. headlineSummary: 2 short sentences.
-        2. newsItems: Top 5 items with title and 1-sentence content.
-        3. podcastScript: Professional, direct, authoritative.
+        1. headlineSummary: 1-2 Korean sentences.
+        2. newsItems: 5 items with title and 1-sentence content.
+        3. podcastScript: Professional tone.
         
-        Structure:
+        Return ONLY valid JSON:
         {
           "date": "${todayStr}",
           "headlineSummary": "...",
@@ -76,7 +76,7 @@ module.exports = async (req, res) => {
                 generationConfig: {
                     response_mime_type: "application/json",
                     temperature: 0.5,
-                    maxOutputTokens: 1024
+                    maxOutputTokens: 800
                 }
             })
         });
