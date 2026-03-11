@@ -3,6 +3,10 @@
     "version": "1.0.0",
     "description": "Automated News System with AI Summarization",
     "main": "index.html",
+    "scripts": {
+        "start": "npx serve ./",
+        "dev": "vercel dev"
+    },
     "dependencies": {
         "node-fetch": "^2.6.7"
     },

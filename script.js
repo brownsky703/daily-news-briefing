@@ -6,10 +6,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const response = await fetch('/api/news');
+            
+            // 응답이 JSON인지 확인
+            const contentType = response.headers.get("content-type");
+            if (!contentType || !contentType.includes("application/json")) {
+                const text = await response.text();
+                console.error("Server returned non-JSON response:", text);
+                throw new Error("서버에서 유효하지 않은 응답을 보냈습니다. (API 키 설정을 확인해 주세요)");
+            }
+
             const data = await response.json();
 
             if (!response.ok || data.error) {
-                throw new Error(data.message || `Server Error (${response.status})`);
+                console.error("API Error Data:", data);
+                throw new Error(data.message || data.error || `Server Error (${response.status})`);
             }
 
             // 1. 날짜 및 헤드라인 업데이트

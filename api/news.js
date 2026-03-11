@@ -5,8 +5,18 @@ let cachedData = null;
 let lastFetchTime = null;
 
 module.exports = async (req, res) => {
-    const NEWS_API_KEY = process.env.NEWS_API_KEY;
-    const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+    // 0. API 키 확인 가드
+    if (!NEWS_API_KEY || !GEMINI_API_KEY) {
+        const missing = [];
+        if (!NEWS_API_KEY) missing.push("NEWS_API_KEY");
+        if (!GEMINI_API_KEY) missing.push("GEMINI_API_KEY");
+        console.error(`Missing API Keys: ${missing.join(', ')}`);
+        return res.status(500).json({
+            error: "Configuration Error",
+            message: `Missing Environment Variables: ${missing.join(', ')}`,
+            details: "Please set the API keys in Vercel environment variables or local .env file."
+        });
+    }
 
     // 한국 시간 기준 날짜 확인
     const now = new Date();
@@ -24,6 +34,7 @@ module.exports = async (req, res) => {
         const domains = 'reuters.com,apnews.com,bloomberg.com,bbc.co.uk,techcrunch.com';
         const newsUrl = `https://newsapi.org/v2/everything?domains=${domains}&language=en&pageSize=5&sortBy=publishedAt&apiKey=${NEWS_API_KEY}`;
 
+        console.log("Fetching news from News API...");
         const newsResponse = await fetch(newsUrl);
         const newsData = await newsResponse.json();
 
@@ -45,7 +56,8 @@ module.exports = async (req, res) => {
         }
 
         // 2. AI 요약 및 팟캐스트 스크립트 생성 (Gemini API)
-        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
+        // 모델 ID를 안정적인 gemini-1.5-flash로 변경
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
         
         const prompt = `Based on these 5 news headlines, create a concise daily news briefing in Korean.
         
@@ -53,18 +65,19 @@ module.exports = async (req, res) => {
         ${articlesContext}
         
         Requirements:
-        1. headlineSummary: 1-2 Korean sentences.
-        2. newsItems: 5 items with title and 1-sentence content.
-        3. podcastScript: Professional tone.
+        1. headlineSummary: 1-2 Korean sentences synthesizing the main theme.
+        2. newsItems: exactly 5 items, each with "title" and "content" (1 sentence summary).
+        3. podcastScript: natural, professional broadcast style script.
         
-        Return ONLY valid JSON:
+        Return ONLY valid JSON in this format:
         {
           "date": "${todayStr}",
-          "headlineSummary": "...",
-          "newsItems": [{"title": "...", "content": "..."}],
-          "podcastScript": ["..."]
+          "headlineSummary": "오늘의 주요 뉴스 요약...",
+          "newsItems": [{"title": "제목", "content": "내용"}],
+          "podcastScript": ["안녕하세요...", "..."]
         }`;
 
+        console.log("Generating summary with Gemini API...");
         const geminiResponse = await fetch(geminiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -75,8 +88,8 @@ module.exports = async (req, res) => {
                 }],
                 generationConfig: {
                     response_mime_type: "application/json",
-                    temperature: 0.5,
-                    maxOutputTokens: 800
+                    temperature: 0.7,
+                    maxOutputTokens: 1000
                 }
             })
         });
@@ -84,7 +97,7 @@ module.exports = async (req, res) => {
         const geminiData = await geminiResponse.json();
 
         if (geminiData.error) {
-            throw new Error(`Gemini API Error: ${geminiData.error.message}`);
+            throw new Error(`Gemini API Error: ${geminiData.error.message || JSON.stringify(geminiData.error)}`);
         }
 
         // 안전한 데이터 추출
@@ -95,34 +108,38 @@ module.exports = async (req, res) => {
 
         let resultText = geminiData.candidates[0].content.parts[0].text;
 
-        // JSON 추출
+        // JSON 추출 및 정제 로직 강화
         let resultJson;
         try {
-            // response_mime_type: "application/json"이 설정되어 있으면 바로 파싱 가능
-            resultJson = JSON.parse(resultText);
+            // 마크다운 코드 블록 제거 시도
+            const jsonBody = resultText.replace(/```json/g, '').replace(/```/g, '').trim();
+            resultJson = JSON.parse(jsonBody);
         } catch (parseError) {
-            console.warn("Direct JSON parsing failed, attempting cleanup:", parseError);
-            const jsonMatch = resultText.match(/```(?:json)?\s*([\s\S]*?)```/);
-            let cleanedJsonText = jsonMatch ? jsonMatch[1].trim() : resultText.trim();
-
-            if (!cleanedJsonText.startsWith('{')) {
-                const bruteMatch = cleanedJsonText.match(/\{[\s\S]*\}/);
-                if (bruteMatch) cleanedJsonText = bruteMatch[0].trim();
+            console.warn("Standard JSON parsing failed, attempting regex extraction:", parseError.message);
+            const jsonMatch = resultText.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                try {
+                    resultJson = JSON.parse(jsonMatch[0]);
+                } catch (e) {
+                    throw new Error("AI returned malformed JSON that couldn't be cleaned.");
+                }
+            } else {
+                throw new Error("Could not find JSON object in AI response.");
             }
-            resultJson = JSON.parse(cleanedJsonText);
         }
 
         if (!resultJson.newsItems || !resultJson.headlineSummary) {
-            throw new Error("Missing required fields in AI response");
+            throw new Error("Missing required fields in AI response structure.");
         }
 
         // 결과 저장 및 반환
         cachedData = resultJson;
         lastFetchTime = todayStr;
 
+        console.log("Successfully generated news briefing for:", todayStr);
         res.status(200).json(resultJson);
     } catch (error) {
-        console.error("API Error:", error.message);
+        console.error("API Processing Error:", error.message);
 
         // 에러 발생 시 캐시가 있으면 반환, 없으면 에러 응답
         if (cachedData) {
@@ -132,7 +149,7 @@ module.exports = async (req, res) => {
             res.status(500).json({
                 error: "Internal Server Error",
                 message: error.message,
-                details: error.message || "Please check API keys and quota."
+                details: "Check server logs for details. This may be due to API limits or malformed AI output."
             });
         }
     }
